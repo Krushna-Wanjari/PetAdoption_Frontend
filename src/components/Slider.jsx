@@ -24,7 +24,7 @@ function ImageSlider() {
         <img
            src={img}
            alt="Pet"
-           className="w-full h-[450px] object-cover rounded-3xl shadow-2xl"
+           className="w-full h-112.5 object-cover rounded-3xl shadow-2xl"
         />
       </SwiperSlide>
     ))}

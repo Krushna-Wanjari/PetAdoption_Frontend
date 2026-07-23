@@ -72,8 +72,6 @@ function Hero() {
 
           </div>
 
-          {/* Right */}
-
           <Slider />
 
         </div>
