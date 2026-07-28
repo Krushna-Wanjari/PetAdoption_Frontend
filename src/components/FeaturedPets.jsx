@@ -1,34 +1,6 @@
 import PetCard from "./PetCard";
 
-import pet1 from "../assets/hero/pet1.jpg";
-import pet2 from "../assets/hero/pet4.jpg";
-import pet3 from "../assets/hero/pet5.jpg";
-
-const pets = [
-  {
-    name: "Bruno",
-    breed: "Golden Retriever • 2 yrs",
-    gender: "Male",
-    status: "Available",
-    image: pet1,
-  },
-  {
-    name: "Luna",
-    breed: "Persian Cat • 1 yr",
-    gender: "Female",
-    status: "Available",
-    image: pet2,
-  },
-  {
-    name: "Max",
-    breed: "Labrador • 3 yrs",
-    gender: "Male",
-    status: "Pending",
-    image: pet3,
-  },
-];
-
-function FeaturedPets() {
+function FeaturedPets({pets}) {
   return (
     <section className="bg-gray-50 py-20">
 
@@ -49,10 +21,12 @@ function FeaturedPets() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
 
           {pets.map((pet) => (
+            <div className="bg-white rounded-xl shadow-md transition-all duration-300 hover:-translate-y-3 hover:shadow-2xl cursor-pointer">
             <PetCard
               key={pet.name}
               pet={pet}
             />
+            </div>
           ))}
 
         </div>
