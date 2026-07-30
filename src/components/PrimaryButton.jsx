@@ -1,8 +1,8 @@
-
-
-function PrimaryButton({ text }) {
+function PrimaryButton({ text, type = "submit", disabled = false, loading = false }) {
   return (
     <button
+      type={type}
+      disabled={disabled || loading}
       className="
       w-full
       bg-orange-600
@@ -14,9 +14,12 @@ function PrimaryButton({ text }) {
       duration-300
       hover:bg-orange-700
       hover:scale-105
+      disabled:opacity-60
+      disabled:cursor-not-allowed
+      disabled:hover:scale-100
       "
     >
-      {text}
+      {loading ? "Please wait..." : text}
     </button>
   );
 }

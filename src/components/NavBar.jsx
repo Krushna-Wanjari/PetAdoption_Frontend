@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaPaw,
   FaUserCircle,
@@ -7,9 +7,20 @@ import {
 } from "react-icons/fa";
 import { useState } from "react";
 import logo from "../assets/logo.jpg";
+import useAuth from "../hooks/useAuth";
 
 function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    setUserMenuOpen(false);
+    setMenuOpen(false);
+    navigate("/");
+  }
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -94,10 +105,45 @@ function NavBar() {
 
             </button>
 
-            <FaUserCircle
-              size={32}
-              className="text-gray-600 cursor-pointer hover:text-orange-500"
-            />
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 text-gray-600 hover:text-orange-500"
+                >
+                  <FaUserCircle size={32} />
+                  <span className="font-medium">
+                    {user?.name?.split(" ")[0]}
+                  </span>
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border py-2 z-50">
+                    <Link
+                      to="/profile"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="block px-4 py-2 hover:bg-orange-50"
+                    >
+                      My Profile
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-orange-50 text-red-500"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-2 text-gray-600 hover:text-orange-500 font-medium"
+              >
+                <FaUserCircle size={28} />
+                Login
+              </Link>
+            )}
 
           </div>
 
@@ -122,15 +168,29 @@ function NavBar() {
 
           <div className="flex flex-col p-5 space-y-5">
 
-            <Link to="/">Home</Link>
+            <Link to="/" onClick={() => setMenuOpen(false)}>Home</Link>
 
-            <Link to="/pets">Pets</Link>
+            <Link to="/pets" onClick={() => setMenuOpen(false)}>Pets</Link>
 
-            <Link to="/adopt">Adopt</Link>
+            <Link to="/adopt" onClick={() => setMenuOpen(false)}>Adopt</Link>
 
-            <Link to="/about">About</Link>
+            <Link to="/about" onClick={() => setMenuOpen(false)}>About</Link>
 
-            <Link to="/contact">Contact</Link>
+            <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
+
+            {isAuthenticated ? (
+              <>
+                <Link to="/profile" onClick={() => setMenuOpen(false)}>My Profile</Link>
+                <button onClick={handleLogout} className="text-left text-red-500">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMenuOpen(false)}>Login</Link>
+                <Link to="/register" onClick={() => setMenuOpen(false)}>Register</Link>
+              </>
+            )}
 
             <button className="bg-orange-500 text-white py-3 rounded-lg">
               Adopt Now
