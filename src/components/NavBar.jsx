@@ -4,6 +4,7 @@ import {
   FaUserCircle,
   FaBars,
   FaTimes,
+  FaHeart
 } from "react-icons/fa";
 import { useState } from "react";
 import logo from "../assets/logo.jpg";
@@ -71,6 +72,13 @@ function NavBar() {
             </Link>
 
             <Link
+              to="/mypets"
+              className="hover:text-orange-500 transition"
+            >
+              My Pets
+            </Link>
+
+            <Link
               to="/adopt"
               className="hover:text-orange-500 transition"
             >
@@ -84,18 +92,22 @@ function NavBar() {
               About
             </Link>
 
-            <Link
-              to="/contact"
-              className="hover:text-orange-500 transition"
-            >
-              Contact
-            </Link>
-
           </div>
 
           {/* Right Side */}
+          
 
           <div className="hidden md:flex items-center gap-4">
+
+            <div>
+            <Link
+                to="/donate"
+                className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition rounded-lg"
+            >
+               <FaHeart />
+               Donate
+            </Link>
+          </div>
 
             <button className="flex items-center gap-2 border border-orange-500 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">
 

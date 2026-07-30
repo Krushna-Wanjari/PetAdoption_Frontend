@@ -5,7 +5,9 @@ import Pets from './pages/Pets';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import Donate from './pages/Donate';
 import ProtectedRoute from './components/ProtectedRoute';
+
 import { Routes, Route } from "react-router-dom";
 
 function App() {
@@ -16,6 +18,7 @@ function App() {
       <Route path="/pets" element={<Pets/>} />
       <Route path="/login" element={<Login/>} />
       <Route path="/register" element={<Register/>} />
+      <Route path="/donate" element={<Donate/>} />
       <Route
         path="/profile"
         element={
