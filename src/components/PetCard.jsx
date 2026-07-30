@@ -1,4 +1,4 @@
-import pet1 from "../assets/hero/pet1.jpg"
+import { Link } from "react-router-dom";
 
 function PetCard({ pet }) {
   return (
@@ -42,7 +42,9 @@ function PetCard({ pet }) {
 
         <button className="mt-5 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl">
 
-          View Profile
+          <Link to={`/pets/${pet.id}`}>
+           View Details
+          </Link>
 
         </button>
 
