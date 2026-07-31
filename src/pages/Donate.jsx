@@ -1,10 +1,18 @@
 import { useState } from "react";
-import { HeartHandshake, Upload, ArrowLeft, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { HeartHandshake, Upload, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
+import { createPetListing } from "../api/petsApi";
+import { getApiErrorMessage } from "../api/apiError";
 
 function Donate() {
   const [step, setStep] = useState(1);
+  const [formError, setFormError] = useState("");
+  const [serverError, setServerError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const [petData, setPetData] = useState({
     petName: "",
@@ -41,16 +49,90 @@ function Donate() {
     setImages(Array.from(e.target.files));
   };
 
-  const handleSubmit = (e) => {
+  function validateStep1() {
+    if (!petData.petName.trim() || !petData.species || !petData.age || !petData.gender) {
+      return "Please fill in the pet's name, species, age and gender.";
+    }
+    if (images.length === 0) {
+      return "Please add at least one photo of the pet.";
+    }
+    return "";
+  }
+
+  function validateStep2() {
+    if (!petData.ownerName.trim() || !petData.email.trim() || !petData.phone.trim() || !petData.city.trim()) {
+      return "Please fill in your name, email, phone and city.";
+    }
+    return "";
+  }
+
+  function handleNext() {
+    const msg = validateStep1();
+    if (msg) {
+      setFormError(msg);
+      return;
+    }
+    setFormError("");
+    setStep(2);
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(petData);
-    console.log(images);
+    const msg = validateStep2();
+    if (msg) {
+      setFormError(msg);
+      return;
+    }
 
-    // TODO:
-    // Upload images to Cloudinary
-    // Send petData + image URLs to Spring Boot
+    setFormError("");
+    setServerError("");
+    setSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      Object.entries(petData).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+      // Backend handles the actual Cloudinary upload — we just send the
+      // raw files here and it returns/stores the hosted image URLs.
+      images.forEach((file) => formData.append("images", file));
+
+      await createPetListing(formData);
+      setSubmitted(true);
+    } catch (err) {
+      setServerError(
+        getApiErrorMessage(err, "Could not submit your pet listing. Please try again.")
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (submitted) {
+    return (
+      <>
+        <NavBar/>
+        <div className="min-h-screen bg-orange-50 py-20 px-4 flex items-center justify-center">
+          <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl p-10 text-center">
+            <CheckCircle2 size={64} className="mx-auto text-green-500" />
+            <h1 className="text-3xl font-bold mt-6">Listing submitted!</h1>
+            <p className="text-gray-500 mt-3">
+              Thanks for giving {petData.petName || "your pet"} a chance at a new home.
+              We'll review the listing and it'll appear in Browse Pets shortly.
+            </p>
+            <button
+              onClick={() => navigate("/pets")}
+              className="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition"
+            >
+              Browse Pets
+            </button>
+          </div>
+        </div>
+        <Footer/>
+      </>
+    );
+  }
 
   return (
     <>
@@ -104,6 +186,12 @@ function Donate() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8">
+
+          {(formError || serverError) && (
+            <p className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl py-3 px-4">
+              {formError || serverError}
+            </p>
+          )}
 
           {/* STEP 1 */}
 
@@ -235,6 +323,7 @@ function Donate() {
 
                   <input
                     type="file"
+                    accept="image/*"
                     multiple
                     hidden
                     onChange={handleImages}
@@ -267,7 +356,7 @@ function Donate() {
 
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
+                  onClick={handleNext}
                   className="flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600"
                 >
                   Next
@@ -356,7 +445,10 @@ function Donate() {
 
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
+                  onClick={() => {
+                    setFormError("");
+                    setStep(1);
+                  }}
                   className="flex items-center gap-2 border border-orange-500 text-orange-500 px-6 py-3 rounded-lg hover:bg-orange-50"
                 >
                   <ArrowLeft size={18} />
@@ -365,9 +457,10 @@ function Donate() {
 
                 <button
                   type="submit"
-                  className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600"
+                  disabled={submitting}
+                  className="bg-orange-500 text-white px-8 py-3 rounded-lg hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Submit Pet
+                  {submitting ? "Submitting..." : "Submit Pet"}
                 </button>
 
               </div>

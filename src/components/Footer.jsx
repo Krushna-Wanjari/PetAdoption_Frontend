@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "../assets/logo.jpg";
 
 import {
@@ -56,25 +57,25 @@ function Footer() {
           <ul className="space-y-3">
 
             <li>
-              <a href="/" className="hover:text-orange-400 duration-300">
+              <Link to="/" className="hover:text-orange-400 duration-300">
                 Home
-              </a>
+              </Link>
             </li>
 
             <li>
-              <a href="/pets" className="hover:text-orange-400 duration-300">
+              <Link to="/pets" className="hover:text-orange-400 duration-300">
                 Adopt Pets
-              </a>
+              </Link>
             </li>
 
             <li>
-              <a href="/about" className="hover:text-orange-400 duration-300">
+              <Link to="/about" className="hover:text-orange-400 duration-300">
                 About Us
-              </a>
+              </Link>
             </li>
 
             <li>
-              <a href="/contact" className="hover:text-orange-400 duration-300">
+              <a href="mailto:support@petadopt.com" className="hover:text-orange-400 duration-300">
                 Contact
               </a>
             </li>
@@ -152,9 +153,12 @@ function Footer() {
 
           </div>
 
-          <button className="mt-8 bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-semibold transition">
+          <Link
+            to="/pets"
+            className="mt-8 inline-block bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-lg text-white font-semibold transition"
+          >
             Adopt a Pet
-          </button>
+          </Link>
 
         </div>
 

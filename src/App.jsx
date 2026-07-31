@@ -1,4 +1,3 @@
-import './App.css'
 import Home from './pages/Home';
 import About from './pages/About';
 import Pets from './pages/Pets';
@@ -19,8 +18,15 @@ function App() {
       <Route path="/pets" element={<Pets/>} />
       <Route path="/login" element={<Login/>} />
       <Route path="/register" element={<Register/>} />
-      <Route path="/donate" element={<Donate/>} />
       <Route path="/pets/:id" element={<PetDetails />} />
+      <Route
+        path="/donate"
+        element={
+          <ProtectedRoute>
+            <Donate/>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/profile"
         element={

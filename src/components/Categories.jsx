@@ -1,4 +1,5 @@
 import { FaDog, FaCat, FaDove, FaPaw } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   {
@@ -28,6 +29,8 @@ const categories = [
 ];
 
 function Categories() {
+  const navigate = useNavigate();
+
   return (
     <section className="max-w-7xl mx-auto py-16">
 
@@ -41,6 +44,7 @@ function Categories() {
 
           <div
             key={item.name}
+            onClick={() => navigate("/pets")}
             className={`${item.color}
             rounded-2xl
             p-8

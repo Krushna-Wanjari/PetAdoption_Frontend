@@ -4,7 +4,7 @@ import {
   FaUserCircle,
   FaBars,
   FaTimes,
-  FaHeart
+  FaHandHoldingHeart
 } from "react-icons/fa";
 import { useState } from "react";
 import logo from "../assets/logo.jpg";
@@ -72,20 +72,6 @@ function NavBar() {
             </Link>
 
             <Link
-              to="/mypets"
-              className="hover:text-orange-500 transition"
-            >
-              My Pets
-            </Link>
-
-            <Link
-              to="/adopt"
-              className="hover:text-orange-500 transition"
-            >
-              Adopt
-            </Link>
-
-            <Link
               to="/about"
               className="hover:text-orange-500 transition"
             >
@@ -95,27 +81,30 @@ function NavBar() {
           </div>
 
           {/* Right Side */}
-          
+
 
           <div className="hidden md:flex items-center gap-4">
 
             <div>
             <Link
                 to="/donate"
-                className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition rounded-lg"
+                className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition"
             >
-               <FaHeart />
-               Donate
+               <FaHandHoldingHeart />
+               List a Pet
             </Link>
           </div>
 
-            <button className="flex items-center gap-2 border border-orange-500 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition">
+            <Link
+              to="/pets"
+              className="flex items-center gap-2 border border-orange-500 text-orange-500 px-4 py-2 rounded-lg hover:bg-orange-500 hover:text-white transition"
+            >
 
               <FaPaw />
 
               Adopt Now
 
-            </button>
+            </Link>
 
             {isAuthenticated ? (
               <div className="relative">
@@ -184,11 +173,9 @@ function NavBar() {
 
             <Link to="/pets" onClick={() => setMenuOpen(false)}>Pets</Link>
 
-            <Link to="/adopt" onClick={() => setMenuOpen(false)}>Adopt</Link>
+            <Link to="/donate" onClick={() => setMenuOpen(false)}>List a Pet</Link>
 
             <Link to="/about" onClick={() => setMenuOpen(false)}>About</Link>
-
-            <Link to="/contact" onClick={() => setMenuOpen(false)}>Contact</Link>
 
             {isAuthenticated ? (
               <>
@@ -204,9 +191,13 @@ function NavBar() {
               </>
             )}
 
-            <button className="bg-orange-500 text-white py-3 rounded-lg">
+            <Link
+              to="/pets"
+              onClick={() => setMenuOpen(false)}
+              className="text-center bg-orange-500 text-white py-3 rounded-lg"
+            >
               Adopt Now
-            </button>
+            </Link>
 
           </div>
 

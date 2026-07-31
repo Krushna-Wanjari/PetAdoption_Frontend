@@ -40,13 +40,12 @@ function PetCard({ pet }) {
 
         </p>
 
-        <button className="mt-5 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl">
-
-          <Link to={`/pets/${pet.id}`}>
-           View Details
-          </Link>
-
-        </button>
+        <Link
+          to={`/pets/${pet.id}`}
+          className="mt-5 flex items-center justify-center w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl transition"
+        >
+          View Details
+        </Link>
 
       </div>
 
