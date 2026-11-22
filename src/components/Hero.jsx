@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import Slider from "../components/Slider";
 
 function Hero() {
@@ -37,17 +38,19 @@ function Hero() {
 
             <div className="flex gap-5 mt-8">
 
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-4 rounded-xl font-semibold">
-
+              <Link
+                to="/pets"
+                className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-4 rounded-xl font-semibold"
+              >
                 Browse Pets
+              </Link>
 
-              </button>
-
-              <button className="bg-white shadow-md px-7 py-4 rounded-xl">
-
+              <Link
+                to="/donate"
+                className="bg-white shadow-md px-7 py-4 rounded-xl hover:bg-gray-50 transition"
+              >
                 List a Pet
-
-              </button>
+              </Link>
 
             </div>
 

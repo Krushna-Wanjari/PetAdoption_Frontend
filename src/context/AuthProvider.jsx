@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { loginUser, registerUser } from "../api/authApi";
-import { TOKEN_KEY, USER_KEY } from "../api/axiosClient";
+import { TOKEN_KEY, USER_KEY, UNAUTHORIZED_EVENT } from "../api/axiosClient";
 import { AuthContext } from "./AuthContext";
 
 function readStoredUser() {
@@ -26,6 +26,20 @@ export function AuthProvider({ children }) {
     setUser(userData);
   }
 
+  const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  }, []);
+
+  // The axios interceptor clears storage on a 401; mirror that into React state
+  // so the header, routes and protected pages all react to the session ending.
+  useEffect(() => {
+    const handleUnauthorized = () => logout();
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [logout]);
+
   async function login(email, password) {
     const data = await loginUser({ email, password }); // JwtResponse
     const userData = {
@@ -44,12 +58,6 @@ export function AuthProvider({ children }) {
     // shouldn't have to type their password twice in one flow.
     await registerUser({ name, email, password });
     return login(email, password);
-  }
-
-  function logout() {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
   }
 
   const value = {

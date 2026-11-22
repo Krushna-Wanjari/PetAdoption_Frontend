@@ -6,6 +6,7 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import Donate from './pages/Donate';
 import PetDetails from "./pages/PetDetails";
+import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import { Routes, Route } from "react-router-dom";
@@ -35,6 +36,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

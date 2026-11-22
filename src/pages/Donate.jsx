@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { HeartHandshake, Upload, ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
+import {
+  HeartHandshake,
+  Upload,
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import NavBar from "../components/NavBar";
 import Footer from "../components/Footer";
-import { createPetListing } from "../api/petsApi";
+import { createPetListing, uploadPetImage } from "../api/petsApi";
 import { getApiErrorMessage } from "../api/apiError";
 
 function Donate() {
@@ -12,6 +19,7 @@ function Donate() {
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [uploadWarnings, setUploadWarnings] = useState([]);
   const navigate = useNavigate();
 
   const [petData, setPetData] = useState({
@@ -21,6 +29,7 @@ function Donate() {
     age: "",
     gender: "",
     color: "",
+    weight: "",
     vaccinated: false,
     sterilized: false,
     description: "",
@@ -35,6 +44,13 @@ function Donate() {
   });
 
   const [images, setImages] = useState([]);
+  // Object URLs are derived from the selection and revoked when they change, so
+  // previews don't leak for the lifetime of the page.
+  const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
+
+  useEffect(() => {
+    return () => previews.forEach((url) => URL.revokeObjectURL(url));
+  }, [previews]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -53,6 +69,10 @@ function Donate() {
     if (!petData.petName.trim() || !petData.species || !petData.age || !petData.gender) {
       return "Please fill in the pet's name, species, age and gender.";
     }
+    const age = Number(petData.age);
+    if (Number.isNaN(age) || age < 0 || age > 50) {
+      return "Age must be a number between 0 and 50.";
+    }
     if (images.length === 0) {
       return "Please add at least one photo of the pet.";
     }
@@ -62,6 +82,9 @@ function Donate() {
   function validateStep2() {
     if (!petData.ownerName.trim() || !petData.email.trim() || !petData.phone.trim() || !petData.city.trim()) {
       return "Please fill in your name, email, phone and city.";
+    }
+    if (!/^\S+@\S+\.\S+$/.test(petData.email.trim())) {
+      return "Please enter a valid email address.";
     }
     return "";
   }
@@ -87,18 +110,48 @@ function Donate() {
 
     setFormError("");
     setServerError("");
+    setUploadWarnings([]);
     setSubmitting(true);
 
     try {
-      const formData = new FormData();
-      Object.entries(petData).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-      // Backend handles the actual Cloudinary upload — we just send the
-      // raw files here and it returns/stores the hosted image URLs.
-      images.forEach((file) => formData.append("images", file));
+      // The backend PetRequest is strict about enums and has no notion of
+      // blank strings for optional text, so trim and drop empties here.
+      const optional = (value) => {
+        const trimmed = value?.trim();
+        return trimmed ? trimmed : undefined;
+      };
 
-      await createPetListing(formData);
+      const petPayload = {
+        name: petData.petName.trim(),
+        species: petData.species,
+        breed: optional(petData.breed),
+        age: Number(petData.age),
+        gender: petData.gender === "Male" ? "MALE" : "FEMALE",
+        description: optional(petData.description),
+        city: optional(petData.city),
+        weight: optional(petData.weight),
+        color: optional(petData.color),
+        vaccinated: petData.vaccinated,
+        sterilized: petData.sterilized,
+        reasonForRehoming: optional(petData.reason),
+        ownerName: optional(petData.ownerName),
+        ownerPhone: optional(petData.phone),
+      };
+
+      const created = await createPetListing(petPayload);
+
+      const failed = [];
+      for (const file of images) {
+        try {
+          await uploadPetImage(created.id, file);
+        } catch {
+          failed.push(file.name);
+        }
+      }
+
+      if (failed.length > 0) {
+        setUploadWarnings(failed);
+      }
       setSubmitted(true);
     } catch (err) {
       setServerError(
@@ -121,6 +174,18 @@ function Donate() {
               Thanks for giving {petData.petName || "your pet"} a chance at a new home.
               We'll review the listing and it'll appear in Browse Pets shortly.
             </p>
+
+            {uploadWarnings.length > 0 && (
+              <div className="mt-6 flex items-start gap-3 text-left text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl py-3 px-4">
+                <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+                <span>
+                  The listing was created, but {uploadWarnings.length} photo(s) failed to
+                  upload: {uploadWarnings.join(", ")}. Please add them again from the admin
+                  pet editor.
+                </span>
+              </div>
+            )}
+
             <button
               onClick={() => navigate("/pets")}
               className="mt-8 w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-xl font-semibold transition"
@@ -152,7 +217,7 @@ function Donate() {
           </h1>
 
           <p className="mt-2 text-orange-100">
-            Help your pet find a loving forever home ❤️
+            Help your pet find a loving forever home
           </p>
 
         </div>
@@ -172,7 +237,6 @@ function Donate() {
             </span>
 
           </div>
-
           <div className="w-full h-3 bg-gray-200 rounded-full">
 
             <div
@@ -235,7 +299,9 @@ function Donate() {
                 <input
                   type="number"
                   name="age"
-                  placeholder="Age"
+                  min="0"
+                  max="50"
+                  placeholder="Age (years)"
                   value={petData.age}
                   onChange={handleChange}
                   className="border rounded-lg p-3"
@@ -257,6 +323,15 @@ function Donate() {
                   name="color"
                   placeholder="Color"
                   value={petData.color}
+                  onChange={handleChange}
+                  className="border rounded-lg p-3"
+                />
+
+                <input
+                  type="text"
+                  name="weight"
+                  placeholder="Weight (e.g. 5 kg)"
+                  value={petData.weight}
                   onChange={handleChange}
                   className="border rounded-lg p-3"
                 />
@@ -320,7 +395,6 @@ function Donate() {
                   <p className="text-gray-500 text-sm">
                     JPG, PNG (Multiple Images)
                   </p>
-
                   <input
                     type="file"
                     accept="image/*"
@@ -331,16 +405,16 @@ function Donate() {
 
                 </label>
 
-                {images.length > 0 && (
+                {previews.length > 0 && (
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
 
-                    {images.map((image, index) => (
+                    {previews.map((src, index) => (
 
                       <img
-                        key={index}
-                        src={URL.createObjectURL(image)}
-                        alt=""
+                        key={src}
+                        src={src}
+                        alt={images[index]?.name ?? "Pet photo preview"}
                         className="rounded-lg h-28 w-full object-cover"
                       />
 

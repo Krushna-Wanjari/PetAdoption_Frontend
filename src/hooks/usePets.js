@@ -1,46 +1,69 @@
 import { useEffect, useState } from "react";
-import { getAllPets, getPetById } from "../api/petsApi";
+import {
+  getAllPets,
+  getPetById,
+  getPetGalleryImages,
+  STATUS_LABELS,
+  GENDER_LABELS,
+} from "../api/petsApi";
 import mockPets from "../petDataList";
 
 /**
- * Normalizes a pet object from either the real backend (PetResponse) or
- * the local sample data (petDataList.js) into one consistent shape the
- * UI can rely on. This is the one place to edit if your backend's field
- * names don't match the ASSUMED shape documented in api/petsApi.js.
+ * Normalizes a pet from either the real backend (PetResponse) or the local
+ * sample data (petDataList.js) into the single shape the UI renders from.
+ *
+ * This is the one place that reconciles the two conventions:
+ *  - the backend sends SCREAMING_CASE enums (AVAILABLE / MALE),
+ *  - the sample data uses Title Case ("Available" / "Male").
+ * Components only ever read `statusLabel` / `genderLabel`, so they never have
+ * to care which source a card came from.
  */
 function normalizePet(raw, source) {
   const isMock = source === "mock";
 
-  const images = isMock
-    ? [raw.image]
-    : raw.imageUrls?.length
-    ? raw.imageUrls
-    : raw.image
-    ? [raw.image]
-    : [];
+  // The main photo wins when present; gallery photos fill in behind it.
+  // Previously only imageUrls was read, so a pet whose photo only lived in the
+  // gallery and a pet with a main photo were handled inconsistently.
+  const images = [
+    ...(raw.imageUrl ? [raw.imageUrl] : []),
+    ...(Array.isArray(raw.imageUrls) ? raw.imageUrls : []),
+    ...(isMock && raw.image ? [raw.image] : []),
+  ].filter(Boolean);
+
+  const uniqueImages = [...new Set(images)];
+
+  // "Golden Retriever • 2 yrs" for API pets; sample data already ships composed.
+  const breedLine = isMock
+    ? raw.breed
+    : [raw.breed, raw.age ? `${raw.age} yrs` : null].filter(Boolean).join(" • ");
+
+  const status = raw.status ?? "AVAILABLE";
 
   return {
     id: raw.id,
     name: raw.name,
     species: raw.species ?? "",
-    breed: isMock
-      ? raw.breed
-      : [raw.breed, raw.age ? `${raw.age} yrs` : null].filter(Boolean).join(" • "),
+    breed: isMock ? raw.breed?.split(" • ")[0] ?? raw.breed : raw.breed ?? "",
+    breedLine,
     age: raw.age ?? "",
     gender: raw.gender ?? "",
+    genderLabel: GENDER_LABELS[String(raw.gender ?? "").toUpperCase()] ?? raw.gender ?? "",
     weight: raw.weight ?? "",
     color: raw.color ?? "",
     city: raw.city ?? "",
-    vaccinated: !!raw.vaccinated,
-    sterilized: !!raw.sterilized,
+    vaccinated: Boolean(raw.vaccinated),
+    sterilized: Boolean(raw.sterilized),
     description: raw.description ?? "",
-    status: raw.status ?? "Available",
-    image: images[0] ?? null,
-    images,
+    reasonForRehoming: raw.reasonForRehoming ?? "",
+    status,
+    statusLabel: STATUS_LABELS[String(status).toUpperCase()] ?? status,
+    isAdopted: String(status).toUpperCase() === "ADOPTED",
+    isPending: String(status).toUpperCase() === "PENDING",
+    image: uniqueImages[0] ?? null,
+    images: uniqueImages,
     owner: {
       name: raw.ownerName ?? raw.owner?.name ?? "",
       phone: raw.ownerPhone ?? raw.owner?.phone ?? "",
-      email: raw.ownerEmail ?? raw.owner?.email ?? "",
     },
   };
 }
@@ -60,10 +83,11 @@ export function usePets() {
         if (cancelled) return;
         setPets(data.map((p) => normalizePet(p, "api")));
         setIsFallback(false);
-      } catch {
-        // Backend not up yet, or the endpoint isn't ready — fall back to
-        // sample data so the page still demos well.
+      } catch (error) {
+        // Keep the demo usable when the API is unreachable, but make the real
+        // failure visible instead of silently swapping in sample data.
         if (cancelled) return;
+        console.error("usePets: falling back to sample data -", error?.message);
         setPets(mockPets.map((p) => normalizePet(p, "mock")));
         setIsFallback(true);
       } finally {
@@ -97,10 +121,28 @@ export function usePet(id) {
       try {
         const data = await getPetById(id);
         if (cancelled) return;
-        setPet(normalizePet(data, "api"));
+        const normalized = normalizePet(data, "api");
+
+        // The pet payload already carries its gallery; only fetch separately
+        // when that came back empty, so the extra request is skipped normally.
+        if (normalized.images.length === 0) {
+          try {
+            const gallery = await getPetGalleryImages(id);
+            if (!cancelled && gallery.length > 0) {
+              const galleryUrls = gallery.map((img) => img.imageUrl).filter(Boolean);
+              normalized.images = [...new Set([normalized.image, ...galleryUrls].filter(Boolean))];
+              normalized.image = normalized.images[0] ?? null;
+            }
+          } catch {
+            // Gallery endpoint unavailable - the pet still renders.
+          }
+        }
+
+        setPet(normalized);
         setIsFallback(false);
-      } catch {
+      } catch (error) {
         if (cancelled) return;
+        console.error(`usePet(${id}): falling back to sample data -`, error?.message);
         const fallback = mockPets.find((p) => String(p.id) === String(id));
         if (fallback) {
           setPet(normalizePet(fallback, "mock"));
